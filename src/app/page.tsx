@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { 
   poleColors,
   poleIcons,
@@ -137,7 +138,16 @@ export default function Dashboard() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex justify-between items-center mb-6">
-            <div></div> {/* Spacer */}
+            <Link 
+              href="/planning"
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                  : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
+              }`}
+            >
+              📅 Planning
+            </Link>
             <h1 className={`text-4xl font-bold mb-3 ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
