@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [clientFilter, setClientFilter] = useState<'all' | 'ecommerce' | 'non-ecommerce'>('all');
+  const [disabledClients, setDisabledClients] = useState<Set<string>>(new Set());
+  const [disabledActivities, setDisabledActivities] = useState<Set<string>>(new Set());
 
   // Fonction pour arrondir correctement et éviter les erreurs de précision
   const roundTo = (num: number, decimals: number = 1) => {
@@ -49,10 +51,82 @@ export default function Dashboard() {
     return `${cleanNumber(cleanDays, 1)}j`;
   };
 
+  // Fonctions pour gérer les désactivations
+  const toggleClientDisabled = (clientName: string) => {
+    const newDisabled = new Set(disabledClients);
+    if (newDisabled.has(clientName)) {
+      newDisabled.delete(clientName);
+    } else {
+      newDisabled.add(clientName);
+    }
+    setDisabledClients(newDisabled);
+  };
+
+  const toggleActivityDisabled = (clientName: string, activityName: string) => {
+    const activityKey = `${clientName}:${activityName}`;
+    const newDisabled = new Set(disabledActivities);
+    if (newDisabled.has(activityKey)) {
+      newDisabled.delete(activityKey);
+    } else {
+      newDisabled.add(activityKey);
+    }
+    setDisabledActivities(newDisabled);
+  };
+
+  const isClientDisabled = (clientName: string) => disabledClients.has(clientName);
+  const isActivityDisabled = (clientName: string, activityName: string) => 
+    disabledActivities.has(`${clientName}:${activityName}`);
+
+  // Fonction pour calculer les stats en excluant les éléments désactivés
+  const getActiveProjects = (projects: any[]) => {
+    return projects.map(project => ({
+      ...project,
+      totalDaysSold: isClientDisabled(project.client) ? 0 : 
+        project.activities
+          .filter((activity: any) => !isActivityDisabled(project.client, activity.name))
+          .reduce((sum: number, activity: any) => sum + activity.days, 0),
+      totalAdsCount: isClientDisabled(project.client) ? 0 : project.totalAdsCount,
+      activities: project.activities.map((activity: any) => ({
+        ...activity,
+        days: isClientDisabled(project.client) || isActivityDisabled(project.client, activity.name) ? 0 : activity.days
+      }))
+    }));
+  };
+
   // Données calculées
   const filteredProjects = getFilteredProjects(clientFilter);
+  const activeProjects = getActiveProjects(filteredProjects);
   const sortedProjects = [...filteredProjects].sort((a, b) => b.totalDaysSold - a.totalDaysSold);
-  const poleStats = getPoleStats();
+  
+  // Calculer les stats des pôles avec les projets actifs
+  const getActivePoleStats = () => {
+    const stats = {
+      ADS: { days: 0, activities: [] as string[] },
+      CREATIVE: { days: 0, activities: [] as string[] },
+      INTEGRATION: { days: 0, activities: [] as string[] },
+      SOCIAL: { days: 0, activities: [] as string[] }
+    };
+
+    activeProjects.forEach(project => {
+      project.activities.forEach((activity: any) => {
+        if (stats[activity.pole] && activity.days > 0) {
+          stats[activity.pole].days += activity.days;
+          if (!stats[activity.pole].activities.includes(activity.name)) {
+            stats[activity.pole].activities.push(activity.name);
+          }
+        }
+      });
+    });
+
+    // Nettoyer les résultats
+    Object.keys(stats).forEach(pole => {
+      stats[pole as keyof typeof stats].days = cleanNumber(stats[pole as keyof typeof stats].days, 1);
+    });
+
+    return stats;
+  };
+  
+  const poleStats = getActivePoleStats();
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${
@@ -116,7 +190,7 @@ export default function Dashboard() {
           <p className={`text-lg ${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
           }`}>
-            {filteredProjects.length} clients actifs • {cleanNumber(filteredProjects.reduce((sum, p) => sum + p.totalDaysSold, 0), 1)}j vendus
+            {filteredProjects.length} clients actifs • {cleanNumber(activeProjects.reduce((sum, p) => sum + p.totalDaysSold, 0), 1)}j vendus
           </p>
         </div>
 
@@ -126,18 +200,18 @@ export default function Dashboard() {
             isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
             <div className="text-3xl font-bold text-blue-500 mb-2">
-              {cleanNumber(filteredProjects.reduce((sum, p) => sum + p.totalDaysSold, 0), 1)}j
+              {cleanNumber(activeProjects.reduce((sum, p) => sum + p.totalDaysSold, 0), 1)}j
             </div>
             <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total vendu</div>
             <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {cleanNumber(filteredProjects.reduce((sum, p) => sum + p.totalDaysSold, 0) * HOURS_PER_DAY, 1)}h
+              {cleanNumber(activeProjects.reduce((sum, p) => sum + p.totalDaysSold, 0) * HOURS_PER_DAY, 1)}h
             </div>
           </div>
           <div className={`rounded-xl shadow-lg p-6 text-center ${
             isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
             <div className="text-3xl font-bold text-green-500 mb-2">
-              {cleanNumber(filteredProjects.reduce((sum, p) => sum + p.totalAdsCount, 0), 1)}
+              {cleanNumber(activeProjects.reduce((sum, p) => sum + p.totalAdsCount, 0), 1)}
             </div>
             <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               {clientFilter === 'non-ecommerce' ? 'Comptes gérés' : 'ADS gérées'}
@@ -157,7 +231,7 @@ export default function Dashboard() {
             isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
             <div className="text-3xl font-bold text-orange-500 mb-2">
-              {filteredProjects.length > 0 ? cleanNumber(filteredProjects.reduce((sum, p) => sum + p.totalDaysSold, 0) / filteredProjects.length, 1) : 0}j
+              {activeProjects.length > 0 ? cleanNumber(activeProjects.reduce((sum, p) => sum + p.totalDaysSold, 0) / activeProjects.length, 1) : 0}j
             </div>
             <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Moyenne/client</div>
             <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>par projet</div>
@@ -166,14 +240,31 @@ export default function Dashboard() {
 
         {/* Vue Projets */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-10">
-          {sortedProjects.map((project, index) => (
+          {sortedProjects.map((project, index) => {
+            const clientDisabled = isClientDisabled(project.client);
+            return (
             <div 
               key={index}
-              className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${
+              className={`group rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 relative ${
                 isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
-              }`}
+              } ${clientDisabled ? 'opacity-50' : ''}`}
               onClick={() => setSelectedProject(selectedProject === project.client ? null : project.client)}
             >
+              {/* Bouton de désactivation client */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleClientDisabled(project.client);
+                }}
+                className={`absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-70 transition-opacity duration-200 text-xs ${
+                  clientDisabled 
+                    ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' 
+                    : 'bg-gray-500 hover:bg-gray-400 text-gray-300'
+                }`}
+                title={clientDisabled ? 'Réactiver le client' : 'Désactiver le client'}
+              >
+                {clientDisabled ? '✓' : '✕'}
+              </button>
               {/* Header du projet */}
               <div 
                 className={`p-6 border-l-4 border-blue-500 ${
@@ -211,22 +302,35 @@ export default function Dashboard() {
               {/* Activités */}
               <div className="p-6">
                 <div className="space-y-3">
-                  {project.activities.map((activity, actIndex) => (
-                    <div key={actIndex} className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: poleColors[activity.pole] }}
-                    ></div>
-                    <span className={`text-sm truncate ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  {project.activities.map((activity, actIndex) => {
+                    const activityDisabled = isActivityDisabled(project.client, activity.name);
+                    return (
+                    <div key={actIndex} className={`flex items-center justify-between ${
+                      activityDisabled ? 'opacity-50' : ''
                     }`}>
-                      {poleIcons[activity.pole]} {activity.name}
-                    </span>
-                  </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleActivityDisabled(project.client, activity.name);
+                          }}
+                          className={`w-4 h-4 rounded-full transition-all duration-200 hover:scale-110 ${
+                            activityDisabled ? 'bg-gray-400' : ''
+                          }`}
+                          style={{ 
+                            backgroundColor: activityDisabled ? '#9CA3AF' : poleColors[activity.pole]
+                          }}
+                          title={activityDisabled ? 'Réactiver la tâche' : 'Désactiver la tâche'}
+                        ></button>
+                        <span className={`text-sm truncate ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        } ${activityDisabled ? 'line-through' : ''}`}>
+                          {poleIcons[activity.pole]} {activity.name}
+                        </span>
+                      </div>
                       <div className={`text-sm font-medium ${
                         isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
+                      } ${activityDisabled ? 'line-through' : ''}`}>
                         {formatDuration(activity.days)}
                         {activity.hours && (
                           <span className={`text-xs ml-1 ${
@@ -237,7 +341,8 @@ export default function Dashboard() {
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Répartition visuelle */}
@@ -268,7 +373,8 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Résumé par Pôles */}
@@ -436,3 +542,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

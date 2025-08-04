@@ -13,6 +13,7 @@ export interface ProjectActivity {
   hours?: number; // Optionnel, pour les activités en heures
   type: 'ADS_MANAGEMENT' | 'ADS_STRATEGY' | 'ADS_MAILING' | 'ADS_REPORTING' | 'CREATIVE_DESIGN' | 'CREATIVE_MAILING' | 'INTEGRATION' | 'SOCIAL';
   pole: 'ADS' | 'CREATIVE' | 'INTEGRATION' | 'SOCIAL';
+  disabled?: boolean; // Pour désactiver une tâche spécifique
 }
 
 export interface SimpleProject {
@@ -23,6 +24,7 @@ export interface SimpleProject {
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
   pole: 'ACQUISITION';
   clientType: 'ecommerce' | 'non-ecommerce';
+  disabled?: boolean; // Pour désactiver tout le client
 }
 
 // Données du pôle Acquisition - Organisation par pôles
