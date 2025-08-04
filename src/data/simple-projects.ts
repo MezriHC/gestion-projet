@@ -146,6 +146,63 @@ export const projects: SimpleProject[] = [
       { name: "Design créative (vidéo/statique)", days: 0.5, type: 'CREATIVE_DESIGN', pole: 'CREATIVE' }
     ]
   },
+  {
+    client: "POP AND SHOES",
+    totalDaysSold: 0.571, // 4h
+    totalAdsCount: 0.571,
+    priority: 'MEDIUM',
+    pole: 'ACQUISITION',
+    clientType: 'ecommerce',
+    activities: [
+      { name: "Gestion des comptes ads & stratégie", days: 0.3, type: 'ADS_MANAGEMENT', pole: 'ADS' },
+      { name: "Stratégie créative et brief", days: 0.1, type: 'ADS_STRATEGY', pole: 'ADS' },
+      { name: "Reporting", days: 0.171, type: 'ADS_REPORTING', pole: 'ADS' }
+    ]
+  },
+  {
+    client: "LA BOUTIQUE DU BÂTON",
+    totalDaysSold: 4,
+    totalAdsCount: 3.5,
+    priority: 'HIGH',
+    pole: 'ACQUISITION',
+    clientType: 'ecommerce',
+    activities: [
+      { name: "Gestion des comptes ads & stratégie", days: 1.5, type: 'ADS_MANAGEMENT', pole: 'ADS' },
+      { name: "Stratégie créative et brief", days: 0.5, type: 'ADS_STRATEGY', pole: 'ADS' },
+      { name: "Design créative (vidéo/statique)", days: 0.5, type: 'CREATIVE_DESIGN', pole: 'CREATIVE' },
+      { name: "Design mailing auto + Anim co", days: 0.5, type: 'CREATIVE_MAILING', pole: 'CREATIVE' },
+      { name: "Intégration emailing auto + Anim co", days: 0.5, type: 'INTEGRATION', pole: 'INTEGRATION' },
+      { name: "Reporting", days: 0.5, type: 'ADS_REPORTING', pole: 'ADS' }
+    ]
+  },
+  {
+    client: "HEHOCARD",
+    totalDaysSold: 2,
+    totalAdsCount: 1.5,
+    priority: 'MEDIUM',
+    pole: 'ACQUISITION',
+    clientType: 'ecommerce',
+    activities: [
+      { name: "Gestion des comptes ads & stratégie", days: 1, type: 'ADS_MANAGEMENT', pole: 'ADS' },
+      { name: "Stratégie créative et brief", days: 0.3, type: 'ADS_STRATEGY', pole: 'ADS' },
+      { name: "Reporting", days: 0.2, type: 'ADS_REPORTING', pole: 'ADS' },
+      { name: "Design créative (vidéo/statique)", days: 0.5, type: 'CREATIVE_DESIGN', pole: 'CREATIVE' }
+    ]
+  },
+  {
+    client: "AROMESTIA",
+    totalDaysSold: 2,
+    totalAdsCount: 1.5,
+    priority: 'MEDIUM',
+    pole: 'ACQUISITION',
+    clientType: 'ecommerce',
+    activities: [
+      { name: "Gestion des comptes ads & stratégie", days: 1, type: 'ADS_MANAGEMENT', pole: 'ADS' },
+      { name: "Stratégie créative et brief", days: 0.3, type: 'ADS_STRATEGY', pole: 'ADS' },
+      { name: "Reporting", days: 0.2, type: 'ADS_REPORTING', pole: 'ADS' },
+      { name: "Design créative (vidéo/statique)", days: 0.5, type: 'CREATIVE_DESIGN', pole: 'CREATIVE' }
+    ]
+  },
   // Clients non-ecommerce
   {
     client: "LE PASHA",
@@ -288,6 +345,17 @@ export const projects: SimpleProject[] = [
     clientType: 'non-ecommerce',
     activities: [
       { name: "Gestion des comptes ads & stratégie", days: 0.286, type: 'ADS_MANAGEMENT', pole: 'ADS' }
+    ]
+  },
+  {
+    client: "ELIT FITNESS",
+    totalDaysSold: 0.5, // 3h30
+    totalAdsCount: 0.5,
+    priority: 'MEDIUM',
+    pole: 'ACQUISITION',
+    clientType: 'non-ecommerce',
+    activities: [
+      { name: "Gestion des comptes ads & stratégie", days: 0.5, type: 'ADS_MANAGEMENT', pole: 'ADS' }
     ]
   }
 ];
