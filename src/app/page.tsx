@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { 
   poleColors,
   poleIcons,
-  getPoleStats,
   getFilteredProjects,
   clientTypeFilters,
-  HOURS_PER_DAY
+  HOURS_PER_DAY,
+  SimpleProject,
+  ProjectActivity
 } from '@/data/simple-projects';
 
 export default function Dashboard() {
@@ -17,10 +18,7 @@ export default function Dashboard() {
   const [disabledClients, setDisabledClients] = useState<Set<string>>(new Set());
   const [disabledActivities, setDisabledActivities] = useState<Set<string>>(new Set());
 
-  // Fonction pour arrondir correctement et éviter les erreurs de précision
-  const roundTo = (num: number, decimals: number = 1) => {
-    return Math.round((num + Number.EPSILON) * Math.pow(10, decimals)) / Math.pow(10, decimals);
-  };
+
 
   // Fonction pour nettoyer les nombres flottants
   const cleanNumber = (num: number, decimals: number = 1) => {
@@ -78,15 +76,15 @@ export default function Dashboard() {
     disabledActivities.has(`${clientName}:${activityName}`);
 
   // Fonction pour calculer les stats en excluant les éléments désactivés
-  const getActiveProjects = (projects: any[]) => {
+  const getActiveProjects = (projects: SimpleProject[]) => {
     return projects.map(project => ({
       ...project,
       totalDaysSold: isClientDisabled(project.client) ? 0 : 
         project.activities
-          .filter((activity: any) => !isActivityDisabled(project.client, activity.name))
-          .reduce((sum: number, activity: any) => sum + activity.days, 0),
+          .filter((activity: ProjectActivity) => !isActivityDisabled(project.client, activity.name))
+          .reduce((sum: number, activity: ProjectActivity) => sum + activity.days, 0),
       totalAdsCount: isClientDisabled(project.client) ? 0 : project.totalAdsCount,
-      activities: project.activities.map((activity: any) => ({
+      activities: project.activities.map((activity: ProjectActivity) => ({
         ...activity,
         days: isClientDisabled(project.client) || isActivityDisabled(project.client, activity.name) ? 0 : activity.days
       }))
@@ -108,7 +106,7 @@ export default function Dashboard() {
     };
 
     activeProjects.forEach(project => {
-      project.activities.forEach((activity: any) => {
+      project.activities.forEach((activity: ProjectActivity) => {
         if (stats[activity.pole] && activity.days > 0) {
           stats[activity.pole].days += activity.days;
           if (!stats[activity.pole].activities.includes(activity.name)) {
