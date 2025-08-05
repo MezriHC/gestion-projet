@@ -160,22 +160,34 @@ export default function PlanningPage() {
   
   const adsWorkload = getAdsWorkload();
   
-  // Obtenir les tâches client spécifiques pour une semaine
+  // Obtenir les tâches client spécifiques pour une semaine avec vrais noms
   const getClientTasksForWeek = (weekNumber: number) => {
-    return ecommerceClients.map(client => {
+    return ecommerceClients.flatMap(client => {
       const clientName = client.client.replace(/ - SEA$/, '').replace(/\(interne\)/, '').replace(/ - SHOPPING$/, '');
       
       switch (weekNumber) {
         case 1:
-          return `Brief créatif - ${clientName}`;
+          // Semaine 1 : Brief créatif - tâches ADS
+          return client.activities
+            .filter(a => a.pole === 'ADS' && (a.name.includes('stratégie') || a.name.includes('brief') || a.name.includes('mailing')))
+            .map(activity => `${activity.name} - ${clientName}`);
         case 2:
-          return `Design créatifs - ${clientName}`;
+          // Semaine 2 : Design - tâches CREATIVE
+          return client.activities
+            .filter(a => a.pole === 'CREATIVE')
+            .map(activity => `${activity.name} - ${clientName}`);
         case 3:
-          return `Intégration - ${clientName}`;
+          // Semaine 3 : Intégration - tâches INTEGRATION
+          return client.activities
+            .filter(a => a.pole === 'INTEGRATION')
+            .map(activity => `${activity.name} - ${clientName}`);
         case 4:
-          return `Réunion client et validation stratégie - ${clientName}`;
+          // Semaine 4 : Réunion - Gestion et reporting
+          return client.activities
+            .filter(a => a.pole === 'ADS' && (a.name.includes('Gestion') || a.name.includes('Reporting')))
+            .map(activity => `${activity.name} - ${clientName}`);
         default:
-          return `Tâche - ${clientName}`;
+          return [];
       }
     });
   };
@@ -433,7 +445,7 @@ export default function PlanningPage() {
                         )}
                         
                         {/* Tâches clients spécifiques */}
-                        {getClientTasksForWeek(week.weekNumber || 1).slice(dayIndex * 3, (dayIndex + 1) * 3).map((clientTask, taskIndex) => (
+                        {getClientTasksForWeek(week.weekNumber || 1).slice(dayIndex * 2, (dayIndex + 1) * 2).map((clientTask, taskIndex) => (
                           <div key={taskIndex} className={`p-1 rounded text-xs ${
                             isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                           }`} style={{ 
@@ -448,15 +460,20 @@ export default function PlanningPage() {
                           </div>
                         ))}
                         
-                        {/* Indicateur s'il y a plus de clients */}
-                        {getClientTasksForWeek(week.weekNumber || 1).length > (dayIndex + 1) * 3 && (
-                          <div className={`p-1 rounded text-xs text-center ${
-                            isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
-                          }`}>
+                        {/* Tooltip avec les autres clients */}
+                        {getClientTasksForWeek(week.weekNumber || 1).length > (dayIndex + 1) * 2 && (
+                          <div 
+                            className={`p-1 rounded text-xs text-center cursor-help ${
+                              isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'
+                            }`}
+                            title={getClientTasksForWeek(week.weekNumber || 1)
+                              .slice((dayIndex + 1) * 2)
+                              .join('\n')}
+                          >
                             <div className={`text-xs ${
                               isDarkMode ? 'text-gray-400' : 'text-gray-500'
                             }`}>
-                              +{getClientTasksForWeek(week.weekNumber || 1).length - (dayIndex + 1) * 3} autres...
+                              +{getClientTasksForWeek(week.weekNumber || 1).length - (dayIndex + 1) * 2} autres tâches...
                             </div>
                           </div>
                         )}
