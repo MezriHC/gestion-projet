@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-// Imports simplifiés pour la vue planning workflow
+import { 
+  projects, 
+  HOURS_PER_DAY
+} from '@/data/simple-projects';
 
 // Workflow de planification - Cycle de 4 semaines
 const planningWorkflow = [
@@ -11,6 +14,7 @@ const planningWorkflow = [
     phase: 'Réunion et validation stratégie client', 
     color: '#8B5CF6', 
     icon: '🤝',
+    pole: 'ADS',
     tasks: [
       'Réunion stratégie avec client',
       'Validation des objectifs',
@@ -24,6 +28,7 @@ const planningWorkflow = [
     phase: 'Brief créative et mailing', 
     color: '#3B82F6', 
     icon: '🎯',
+    pole: 'ADS',
     tasks: [
       'Brief créatif détaillé',
       'Stratégie mailing automation',
@@ -37,6 +42,7 @@ const planningWorkflow = [
     phase: 'Design', 
     color: '#EF4444', 
     icon: '🎨',
+    pole: 'CREATIVE',
     tasks: [
       'Création visuels publicitaires',
       'Design vidéos créatives',
@@ -50,6 +56,7 @@ const planningWorkflow = [
     phase: 'Intégration', 
     color: '#10B981', 
     icon: '⚙️',
+    pole: 'INTEGRATION',
     tasks: [
       'Setup campagnes publicitaires',
       'Intégration emailings',
@@ -121,6 +128,36 @@ const generateCycles = () => {
 export default function PlanningPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [selectedCycle, setSelectedCycle] = useState(0);
+  
+  // Filtrer seulement les clients e-commerce
+  const ecommerceClients = projects.filter(p => p.clientType === 'ecommerce');
+  
+  // Calculer les charges ADS par phase
+  const getAdsWorkload = () => {
+    const totalAdsActivities = ecommerceClients.reduce((sum, client) => {
+      return sum + client.activities
+        .filter(a => a.pole === 'ADS')
+        .reduce((actSum, a) => actSum + a.days, 0);
+    }, 0);
+    
+    const totalClients = ecommerceClients.length;
+    
+    return {
+      totalDays: Math.round(totalAdsActivities * 10) / 10,
+      totalHours: Math.round(totalAdsActivities * HOURS_PER_DAY * 10) / 10,
+      clientCount: totalClients,
+      averageDaysPerClient: totalClients > 0 ? Math.round((totalAdsActivities / totalClients) * 10) / 10 : 0,
+      // Répartition par semaine selon le workflow
+      weeklyBreakdown: {
+        week4: Math.round((totalAdsActivities * 0.3) * 10) / 10, // 30% pour stratégie/validation
+        week1: Math.round((totalAdsActivities * 0.4) * 10) / 10, // 40% pour brief
+        week2: Math.round((totalAdsActivities * 0.2) * 10) / 10, // 20% pour support au design
+        week3: Math.round((totalAdsActivities * 0.1) * 10) / 10  // 10% pour validation finale
+      }
+    };
+  };
+  
+  const adsWorkload = getAdsWorkload();
   
   // Générer les cycles
   const cycles = generateCycles();
@@ -206,18 +243,88 @@ export default function PlanningPage() {
             </p>
           </div>
 
-          {/* Légende workflow */}
+          {/* Légende workflow avec charges ADS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {planningWorkflow.map((step, index) => (
-              <div 
-                key={index} 
-                className="flex items-center justify-center p-3 rounded-lg text-white font-medium"
-                style={{ backgroundColor: step.color }}
-              >
-                <span className="mr-2">{step.icon}</span>
-                <span className="text-sm">S{step.week} - {step.phase}</span>
+            {planningWorkflow.map((step, index) => {
+              const weekWorkload = step.week === 4 ? adsWorkload.weeklyBreakdown.week4 :
+                                 step.week === 1 ? adsWorkload.weeklyBreakdown.week1 :
+                                 step.week === 2 ? adsWorkload.weeklyBreakdown.week2 :
+                                 adsWorkload.weeklyBreakdown.week3;
+              
+              return (
+                <div 
+                  key={index} 
+                  className="p-3 rounded-lg text-white"
+                  style={{ backgroundColor: step.color }}
+                >
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <span className="mr-2">{step.icon}</span>
+                      <span className="text-sm font-medium">S{step.week}</span>
+                    </div>
+                    <div className="text-xs mb-2">{step.phase}</div>
+                    <div className="text-lg font-bold">{weekWorkload}j</div>
+                    <div className="text-xs opacity-90">{Math.round(weekWorkload * HOURS_PER_DAY)}h ADS</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Stats globales ADS */}
+          <div className={`p-4 rounded-lg mb-6 ${
+            isDarkMode ? 'bg-gray-700' : 'bg-blue-50'
+          }`}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  {adsWorkload.totalDays}j
+                </div>
+                <div className={`text-xs ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Total ADS
+                </div>
               </div>
-            ))}
+              <div>
+                <div className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  {adsWorkload.totalHours}h
+                </div>
+                <div className={`text-xs ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Total heures
+                </div>
+              </div>
+              <div>
+                <div className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  {adsWorkload.clientCount}
+                </div>
+                <div className={`text-xs ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Clients e-commerce
+                </div>
+              </div>
+              <div>
+                <div className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`}>
+                  {adsWorkload.averageDaysPerClient}j
+                </div>
+                <div className={`text-xs ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  Moyenne/client
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Planning par jour - 5 colonnes par semaine */}
@@ -273,23 +380,7 @@ export default function PlanningPage() {
 
                       {/* Tâches du jour */}
                       <div className="space-y-2">
-                        {week.workflow?.tasks.slice(dayIndex, dayIndex + 1).map((task, taskIndex) => (
-                          <div key={taskIndex} className={`p-2 rounded text-xs text-center ${
-                            isDarkMode ? 'bg-gray-600' : 'bg-white'
-                          }`} style={{ 
-                            borderLeft: `3px solid ${week.workflow?.color}`,
-                            backgroundColor: isDarkMode ? undefined : week.workflow?.color + '15'
-                          }}>
-                            <div className={`font-medium ${
-                              isDarkMode ? 'text-gray-200' : 'text-gray-800'
-                            }`}>
-                              {task}
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {/* Tâches additionnelles si moins de 5 */}
-                        {week.workflow?.tasks.length && dayIndex < week.workflow.tasks.length && (
+                        {week.workflow?.tasks[dayIndex] && (
                           <div className={`p-2 rounded text-xs text-center ${
                             isDarkMode ? 'bg-gray-600' : 'bg-white'
                           }`} style={{ 
@@ -303,6 +394,37 @@ export default function PlanningPage() {
                             </div>
                           </div>
                         )}
+                        
+                        {/* Charge de travail pour les semaines ADS */}
+                        {(week.workflow?.pole === 'ADS') && (
+                          <div className={`p-1 rounded text-xs text-center ${
+                            isDarkMode ? 'bg-blue-600' : 'bg-blue-100'
+                          }`}>
+                            <div className={`text-xs font-bold ${
+                              isDarkMode ? 'text-blue-200' : 'text-blue-800'
+                            }`}>
+                              🎯 {week.weekNumber === 4 ? adsWorkload.weeklyBreakdown.week4 : adsWorkload.weeklyBreakdown.week1}j ADS
+                            </div>
+                            <div className={`text-xs ${
+                              isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                            }`}>
+                              {week.weekNumber === 4 ? '30%' : '40%'} de la charge
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Support ADS pour autres phases */}
+                        {(week.workflow?.pole !== 'ADS') && (
+                          <div className={`p-1 rounded text-xs text-center ${
+                            isDarkMode ? 'bg-gray-600' : 'bg-gray-100'
+                          }`}>
+                            <div className={`text-xs ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`}>
+                              + {week.weekNumber === 2 ? adsWorkload.weeklyBreakdown.week2 : adsWorkload.weeklyBreakdown.week3}j ADS support
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -312,35 +434,41 @@ export default function PlanningPage() {
           </div>
         </div>
 
-        {/* Résumé du workflow */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-          {planningWorkflow.map((step, index) => (
-            <div key={index} className={`rounded-xl p-6 text-center ${
-              isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'
-            }`}>
-              <div 
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-lg"
-                style={{ backgroundColor: step.color }}
-              >
-                {step.icon}
-              </div>
-              <div className={`text-lg font-bold mb-2 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Semaine {step.week}
-              </div>
-              <div className={`text-sm ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                {step.phase}
-              </div>
-              <div className={`text-xs mt-2 ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                {step.tasks.length} tâches principales
-              </div>
-            </div>
-          ))}
+        {/* Liste des clients e-commerce */}
+        <div className={`rounded-xl p-6 mt-8 ${
+          isDarkMode ? 'bg-gray-800' : 'bg-white shadow-sm'
+        }`}>
+          <h3 className={`text-lg font-bold mb-4 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            🛒 Clients E-commerce inclus ({ecommerceClients.length})
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ecommerceClients.map((client, index) => {
+              const adsActivities = client.activities.filter(a => a.pole === 'ADS');
+              const totalAdsDays = adsActivities.reduce((sum, a) => sum + a.days, 0);
+              
+              return (
+                <div key={index} className={`p-3 rounded-lg border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className={`font-medium text-sm ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    {client.client.replace(/ - SEA$/, '').replace(/\(interne\)/, '').replace(/ - SHOPPING$/, '')}
+                  </div>
+                  <div className={`text-xs mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    🎯 {Math.round(totalAdsDays * 10) / 10}j ADS • {client.totalAdsCount} comptes
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
       </div>
