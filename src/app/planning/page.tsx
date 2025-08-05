@@ -99,8 +99,9 @@ const generateCycles = () => {
         });
       }
       
-      // Trouver le workflow correspondant (4, 1, 2, 3)
-      const workflowOrder = [4, 1, 2, 3];
+      // Trouver le workflow correspondant (1, 2, 3, 4)
+      // La semaine 4 (validation) est la dernière du cycle, pas la première
+      const workflowOrder = [1, 2, 3, 4];
       const workflowIndex = workflowOrder[week];
       const workflow = planningWorkflow.find(w => w.week === workflowIndex);
       
@@ -149,15 +150,35 @@ export default function PlanningPage() {
       averageDaysPerClient: totalClients > 0 ? Math.round((totalAdsActivities / totalClients) * 10) / 10 : 0,
       // Répartition par semaine selon le workflow
       weeklyBreakdown: {
-        week4: Math.round((totalAdsActivities * 0.3) * 10) / 10, // 30% pour stratégie/validation
         week1: Math.round((totalAdsActivities * 0.4) * 10) / 10, // 40% pour brief
         week2: Math.round((totalAdsActivities * 0.2) * 10) / 10, // 20% pour support au design
-        week3: Math.round((totalAdsActivities * 0.1) * 10) / 10  // 10% pour validation finale
+        week3: Math.round((totalAdsActivities * 0.1) * 10) / 10, // 10% pour validation finale
+        week4: Math.round((totalAdsActivities * 0.3) * 10) / 10  // 30% pour stratégie/validation
       }
     };
   };
   
   const adsWorkload = getAdsWorkload();
+  
+  // Obtenir les tâches client spécifiques pour une semaine
+  const getClientTasksForWeek = (weekNumber: number) => {
+    return ecommerceClients.map(client => {
+      const clientName = client.client.replace(/ - SEA$/, '').replace(/\(interne\)/, '').replace(/ - SHOPPING$/, '');
+      
+      switch (weekNumber) {
+        case 1:
+          return `Brief créatif - ${clientName}`;
+        case 2:
+          return `Design créatifs - ${clientName}`;
+        case 3:
+          return `Intégration - ${clientName}`;
+        case 4:
+          return `Réunion client et validation stratégie - ${clientName}`;
+        default:
+          return `Tâche - ${clientName}`;
+      }
+    });
+  };
   
   // Générer les cycles
   const cycles = generateCycles();
@@ -246,10 +267,10 @@ export default function PlanningPage() {
           {/* Légende workflow avec charges ADS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {planningWorkflow.map((step, index) => {
-              const weekWorkload = step.week === 4 ? adsWorkload.weeklyBreakdown.week4 :
-                                 step.week === 1 ? adsWorkload.weeklyBreakdown.week1 :
+              const weekWorkload = step.week === 1 ? adsWorkload.weeklyBreakdown.week1 :
                                  step.week === 2 ? adsWorkload.weeklyBreakdown.week2 :
-                                 adsWorkload.weeklyBreakdown.week3;
+                                 step.week === 3 ? adsWorkload.weeklyBreakdown.week3 :
+                                 adsWorkload.weeklyBreakdown.week4;
               
               return (
                 <div 
@@ -380,6 +401,7 @@ export default function PlanningPage() {
 
                       {/* Tâches du jour */}
                       <div className="space-y-2">
+                        {/* Tâche générale */}
                         {week.workflow?.tasks[dayIndex] && (
                           <div className={`p-2 rounded text-xs text-center ${
                             isDarkMode ? 'bg-gray-600' : 'bg-white'
@@ -395,33 +417,31 @@ export default function PlanningPage() {
                           </div>
                         )}
                         
-                        {/* Charge de travail pour les semaines ADS */}
-                        {(week.workflow?.pole === 'ADS') && (
-                          <div className={`p-1 rounded text-xs text-center ${
-                            isDarkMode ? 'bg-blue-600' : 'bg-blue-100'
-                          }`}>
-                            <div className={`text-xs font-bold ${
-                              isDarkMode ? 'text-blue-200' : 'text-blue-800'
-                            }`}>
-                              🎯 {week.weekNumber === 4 ? adsWorkload.weeklyBreakdown.week4 : adsWorkload.weeklyBreakdown.week1}j ADS
-                            </div>
+                        {/* Tâches clients spécifiques */}
+                        {getClientTasksForWeek(week.weekNumber || 1).slice(dayIndex * 3, (dayIndex + 1) * 3).map((clientTask, taskIndex) => (
+                          <div key={taskIndex} className={`p-1 rounded text-xs ${
+                            isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                          }`} style={{ 
+                            borderLeft: `2px solid ${week.workflow?.color}`,
+                            backgroundColor: isDarkMode ? undefined : week.workflow?.color + '10'
+                          }}>
                             <div className={`text-xs ${
-                              isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
                             }`}>
-                              {week.weekNumber === 4 ? '30%' : '40%'} de la charge
+                              {clientTask}
                             </div>
                           </div>
-                        )}
+                        ))}
                         
-                        {/* Support ADS pour autres phases */}
-                        {(week.workflow?.pole !== 'ADS') && (
+                        {/* Indicateur s'il y a plus de clients */}
+                        {getClientTasksForWeek(week.weekNumber || 1).length > (dayIndex + 1) * 3 && (
                           <div className={`p-1 rounded text-xs text-center ${
-                            isDarkMode ? 'bg-gray-600' : 'bg-gray-100'
+                            isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
                           }`}>
                             <div className={`text-xs ${
-                              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
                             }`}>
-                              + {week.weekNumber === 2 ? adsWorkload.weeklyBreakdown.week2 : adsWorkload.weeklyBreakdown.week3}j ADS support
+                              +{getClientTasksForWeek(week.weekNumber || 1).length - (dayIndex + 1) * 3} autres...
                             </div>
                           </div>
                         )}
