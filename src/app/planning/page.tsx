@@ -439,9 +439,11 @@ export default function PlanningPage() {
                           </div>
                         )}
                         
-                        {/* Tâches clients spécifiques */}
-                        {getClientTasksForWeek(week.weekNumber || 1).slice(dayIndex * 2, (dayIndex + 1) * 2).map((clientTask, taskIndex) => (
-                          <div key={taskIndex} className={`p-1 rounded text-xs ${
+                        {/* Répartir les tâches clients sur les 5 jours */}
+                        {getClientTasksForWeek(week.weekNumber || 1)
+                          .filter((_, taskIndex) => taskIndex % 5 === dayIndex) // Répartir par jour
+                          .map((clientTask, taskIndex) => (
+                          <div key={taskIndex} className={`p-1 rounded text-xs mb-1 ${
                             isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                           }`} style={{ 
                             borderLeft: `2px solid ${week.workflow?.color}`,
@@ -454,24 +456,6 @@ export default function PlanningPage() {
                             </div>
                           </div>
                         ))}
-                        
-                        {/* Tooltip avec les autres clients */}
-                        {getClientTasksForWeek(week.weekNumber || 1).length > (dayIndex + 1) * 2 && (
-                          <div 
-                            className={`p-1 rounded text-xs text-center cursor-help ${
-                              isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'
-                            }`}
-                            title={getClientTasksForWeek(week.weekNumber || 1)
-                              .slice((dayIndex + 1) * 2)
-                              .join('\n')}
-                          >
-                            <div className={`text-xs ${
-                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
-                              +{getClientTasksForWeek(week.weekNumber || 1).length - (dayIndex + 1) * 2} autres tâches...
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
