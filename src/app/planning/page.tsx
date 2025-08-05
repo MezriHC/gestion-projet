@@ -8,71 +8,74 @@ import {
 } from '@/data/simple-projects';
 
 // Workflow de planification - Cycle de 4 semaines
-const planningWorkflow = [
-  { 
-    week: 4, 
-    phase: 'Réunion et validation stratégie client', 
-    color: '#8B5CF6', 
-    icon: '🤝',
-    pole: 'ADS',
-    tasks: [
-      'Réunion stratégie avec client',
-      'Validation des objectifs',
-      'Définition du budget',
-      'Planning timeline',
-      'Briefing équipes'
-    ]
-  },
-  { 
-    week: 1, 
-    phase: 'Brief créative et mailing', 
-    color: '#3B82F6', 
-    icon: '🎯',
-    pole: 'ADS',
-    tasks: [
-      'Brief créatif détaillé',
-      'Stratégie mailing automation',
-      'Définition personas',
-      'Moodboard et références',
-      'Validation brief créatif'
-    ]
-  },
-  { 
-    week: 2, 
-    phase: 'Design', 
-    color: '#EF4444', 
-    icon: '🎨',
-    pole: 'CREATIVE',
-    tasks: [
-      'Création visuels publicitaires',
-      'Design vidéos créatives',
-      'Maquettes emailing',
-      'Validation designs',
-      'Déclinaisons formats'
-    ]
-  },
-  { 
-    week: 3, 
-    phase: 'Intégration', 
-    color: '#10B981', 
-    icon: '⚙️',
-    pole: 'INTEGRATION',
-    tasks: [
-      'Setup campagnes publicitaires',
-      'Intégration emailings',
-      'Tests techniques',
-      'Configuration tracking',
-      'Validation finale'
-    ]
-  }
-];
+  const planningWorkflow = [
+    { 
+      week: 4, 
+      phase: 'Réunion stratégie avec client & validation', 
+      color: '#8B5CF6', 
+      icon: '🤝',
+      pole: 'ADS',
+      tasks: [
+        'Réunion stratégie avec client & validation',
+        'Validation des objectifs clients',
+        'Définition du budget mensuel',
+        'Planning timeline détaillé',
+        'Briefing équipes opérationnelles'
+      ]
+    },
+    { 
+      week: 1, 
+      phase: 'Brief créative et mailing', 
+      color: '#3B82F6', 
+      icon: '🎯',
+      pole: 'ADS',
+      tasks: [
+        'Brief créative et mailing',
+        'Stratégie mailing automation',
+        'Définition personas détaillées',
+        'Moodboard et références visuelles',
+        'Validation brief créatif final'
+      ]
+    },
+    { 
+      week: 2, 
+      phase: 'Design créative et mailing', 
+      color: '#EF4444', 
+      icon: '🎨',
+      pole: 'CREATIVE',
+      tasks: [
+        'Design créative et mailing',
+        'Création visuels publicitaires',
+        'Design vidéos créatives',
+        'Maquettes emailing personnalisées',
+        'Déclinaisons formats multiples'
+      ]
+    },
+    { 
+      week: 3, 
+      phase: 'Integration mailing', 
+      color: '#10B981', 
+      icon: '⚙️',
+      pole: 'INTEGRATION',
+      tasks: [
+        'Integration mailing',
+        'Setup campagnes publicitaires',
+        'Intégration emailings automatisés',
+        'Tests techniques complets',
+        'Configuration tracking avancé'
+      ]
+    }
+  ];
 
-// Générer les cycles de 4 semaines
+// Générer les cycles de 4 semaines (DÉCALÉ D'UNE SEMAINE)
 const generateCycles = () => {
   const cycles = [];
   const today = new Date();
   const currentMonday = new Date(today);
   currentMonday.setDate(today.getDate() - today.getDay() + 1);
+  
+  // DÉCALAGE : Reculer d'une semaine pour la planification
+  currentMonday.setDate(currentMonday.getDate() - 7);
   
   // Générer 6 cycles (24 semaines = 6 mois)
   for (let cycle = 0; cycle < 6; cycle++) {
@@ -160,36 +163,28 @@ export default function PlanningPage() {
   
   const adsWorkload = getAdsWorkload();
   
-  // Obtenir les tâches client spécifiques pour une semaine avec vrais noms
+  // Obtenir les 4 tâches spécifiques pour chaque client e-commerce
   const getClientTasksForWeek = (weekNumber: number) => {
-    return ecommerceClients.flatMap(client => {
+    return ecommerceClients.map(client => {
       const clientName = client.client.replace(/ - SEA$/, '').replace(/\(interne\)/, '').replace(/ - SHOPPING$/, '');
       
       switch (weekNumber) {
         case 1:
-          // Semaine 1 : Brief créatif - tâches ADS
-          return client.activities
-            .filter(a => a.pole === 'ADS' && (a.name.includes('stratégie') || a.name.includes('brief') || a.name.includes('mailing')))
-            .map(activity => `${activity.name} - ${clientName}`);
+          // Semaine 1 : Brief créative et mailing
+          return `Brief créative et mailing - ${clientName}`;
         case 2:
-          // Semaine 2 : Design - tâches CREATIVE
-          return client.activities
-            .filter(a => a.pole === 'CREATIVE')
-            .map(activity => `${activity.name} - ${clientName}`);
+          // Semaine 2 : Design créative et mailing  
+          return `Design créative et mailing - ${clientName}`;
         case 3:
-          // Semaine 3 : Intégration - tâches INTEGRATION
-          return client.activities
-            .filter(a => a.pole === 'INTEGRATION')
-            .map(activity => `${activity.name} - ${clientName}`);
+          // Semaine 3 : Integration mailing
+          return `Integration mailing - ${clientName}`;
         case 4:
-          // Semaine 4 : Réunion - Gestion et reporting
-          return client.activities
-            .filter(a => a.pole === 'ADS' && (a.name.includes('Gestion') || a.name.includes('Reporting')))
-            .map(activity => `${activity.name} - ${clientName}`);
+          // Semaine 4 : Réunion stratégie avec client & validation
+          return `Réunion stratégie avec client & validation - ${clientName}`;
         default:
-          return [];
+          return '';
       }
-    });
+    }).filter(task => task !== '');
   };
   
   // Générer les cycles
