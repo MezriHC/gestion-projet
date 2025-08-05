@@ -99,10 +99,10 @@ const generateCycles = () => {
         });
       }
       
-      // Trouver le workflow correspondant (1, 2, 3, 4)
-      // La semaine 4 (validation) est la dernière du cycle, pas la première
-      const workflowOrder = [1, 2, 3, 4];
-      const workflowIndex = workflowOrder[week];
+      // Affichage avec semaine 4 en haut (4, 1, 2, 3)
+      // La semaine 4 (validation) est affichée en premier pour la planification
+      const displayOrder = [4, 1, 2, 3];
+      const workflowIndex = displayOrder[week];
       const workflow = planningWorkflow.find(w => w.week === workflowIndex);
       
       weeks.push({
@@ -264,9 +264,15 @@ export default function PlanningPage() {
             </p>
           </div>
 
-          {/* Légende workflow avec charges ADS */}
+          {/* Légende workflow avec charges ADS - Ordre d'affichage */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {planningWorkflow.map((step, index) => {
+            {[
+              planningWorkflow.find(s => s.week === 4),
+              planningWorkflow.find(s => s.week === 1), 
+              planningWorkflow.find(s => s.week === 2),
+              planningWorkflow.find(s => s.week === 3)
+            ].map((step, index) => {
+              if (!step) return null;
               const weekWorkload = step.week === 1 ? adsWorkload.weeklyBreakdown.week1 :
                                  step.week === 2 ? adsWorkload.weeklyBreakdown.week2 :
                                  step.week === 3 ? adsWorkload.weeklyBreakdown.week3 :
@@ -350,7 +356,15 @@ export default function PlanningPage() {
 
           {/* Planning par jour - 5 colonnes par semaine */}
           <div className="space-y-6">
-            {cycles[selectedCycle].weeks.map((week, weekIndex) => (
+            {/* Réordonner pour afficher semaine 4 en premier */}
+            {[
+              cycles[selectedCycle].weeks.find(w => w.weekNumber === 4),
+              cycles[selectedCycle].weeks.find(w => w.weekNumber === 1),
+              cycles[selectedCycle].weeks.find(w => w.weekNumber === 2),
+              cycles[selectedCycle].weeks.find(w => w.weekNumber === 3)
+            ].filter(Boolean).map((week, weekIndex) => {
+              if (!week) return null;
+              return (
               <div key={weekIndex} className={`border-l-4 pl-4 ${
                 isDarkMode ? 'border-gray-600' : 'border-gray-300'
               }`} style={{ borderLeftColor: week.workflow?.color }}>
@@ -372,7 +386,8 @@ export default function PlanningPage() {
                     <p className={`text-sm ${
                       isDarkMode ? 'text-gray-400' : 'text-gray-600'
                     }`}>
-                      Semaine {week.weekNumber}
+                      Semaine {week.weekNumber} 
+                      {week.weekNumber === 4 && <span className="ml-2 text-yellow-500">🔝 Planning</span>}
                     </p>
                   </div>
                 </div>
@@ -450,7 +465,8 @@ export default function PlanningPage() {
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
